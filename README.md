@@ -16,10 +16,11 @@
 
 ```mermaid
 graph TD
-    用户query[用户query] --> 规划agent[规划agent：规划解题步骤]
-    规划agent --> 主模型[主模型：执行当前步骤]
+    用户query[用户query] --> 规划agent_0[规划agent：规划解题步骤]
+    规划agent_0 --> 主模型[主模型：执行当前步骤]
     主模型 --> 批评agent[批评agent：对当前现状，包括从现在看之前执行的步骤的反思和批评]
-    批评agent --> 规划agent[规划agent：根据批评和执行现状，重新给出任务规划，及回溯]
+    批评agent --> 规划agent_1[规划agent：根据批评和执行现状，重新给出任务规划，及回溯]
+    规划agent_1 --> 主模型[主模型：执行当前步骤]
 ```
 
 ## 意义
