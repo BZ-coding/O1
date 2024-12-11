@@ -1,6 +1,6 @@
 # O1
 
-## playground
+## PlayGround
 
 https://www.coze.cn/s/iUeCReKg/
 
