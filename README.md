@@ -1,5 +1,9 @@
 # O1
 
+## PlayGround
+
+https://www.coze.cn/s/iUeCReKg/
+
 ## 背景
 我们认为，O1的思想在于：在训练方法已经几乎成为范式的今天，把计算资源更多的向推理倾斜，可以得到更好的效果。
 
@@ -49,6 +53,11 @@ graph TD
 - [ ] 训练规划模型（LoRA）
   - [ ] 初期手动构建PRM语料，逐步建立数据飞轮，后续以校验为主
 - [ ] 训练批评模型（LoRA），确保其在反思与批评过程中能够有效帮助模型改进
+- [ ] 训练：
+    - [ ] 先用几十、一百多条，把process格式输出训练出来
+        - [ ] https://huggingface.co/datasets/O1-OPEN/OpenO1-SFT
+    - [ ] 再训练rm模型（批评器）
+    - [ ] 最后用dpo训练反思能力 
 - 增强功能
   - [ ] 训练规划模型时，可使用unuse token标记步骤段，lora训练时需要打开embedding层和输出头的训练
     - https://zhuanlan.zhihu.com/p/646172586
