@@ -55,6 +55,7 @@ graph TD
 - [ ] 训练批评模型（LoRA），确保其在反思与批评过程中能够有效帮助模型改进
 - [ ] 训练：
     - [ ] 先用几十、一百多条，把process格式输出训练出来
+        - [ ] https://huggingface.co/datasets/O1-OPEN/OpenO1-SFT
     - [ ] 再训练rm模型（批评器）
     - [ ] 最后用dpo训练反思能力 
 - 增强功能
