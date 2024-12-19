@@ -1,7 +1,8 @@
+from utils.commoner import Commoner
 from utils.model_utils.chatbot import ChatBot
 
 
-class Planner:
+class Planner(Commoner):
     prompt = """你是一个规划问题解决步骤的大师。你需要对用户问题进行分析，并根据历史执行信息的具体执行情况，判断如果执行出错则可以要求重新执行当前步骤或直接给出新的解题规划步骤并从头重新执行；而如果历史执行信息良好，则可以给出下一步骤，让其继续执行。
 
 
@@ -42,22 +43,14 @@ class Planner:
 请注意：你不需要自己解决问题，你只负责规划解题方案以及反思。"""
 
     def __init__(self, question):
-        self.question = question
+        super().__init__(question)
         self.analysis = ""
         self.plan = ""
         self.action = ""
-        self.chatbot = ChatBot()
-
-    def _apply_prompt(self, history=""):
-        return Planner.prompt.format(question=self.question, old_plan=self.plan, history=history)
-
-    def _model_predict(self, content):
-        return self.chatbot.chat(messages=content, stream=True)
 
     def predict(self, history=""):
-        content = self._apply_prompt(history=history)
         result = ""
-        for token in self._model_predict(content=content):
+        for token in self._predict(old_plan=self.plan, history=history):
             result += token
             yield token
 
@@ -68,6 +61,15 @@ class Planner:
         result_ = self.plan.split(sep="请执行action：")
         self.plan = result_[0].strip()
         self.action = result_[-1].strip()
+
+    def get_analysis(self):
+        return self.analysis
+
+    def get_plan(self):
+        return self.plan
+
+    def get_action(self):
+        return self.action
 
 
 if __name__ == "__main__":
@@ -86,6 +88,6 @@ Q先生听到了P先生的回答，说：我也知道了。
     for token in planner.predict(history=""):
         print(token, end='', flush=True)
     print('\n\n\n')
-    print(f"planner.analysis : {planner.analysis}")
-    print(f"planner.plan : {planner.plan}")
-    print(f"planner.action : {planner.action}")
+    print(f"planner.analysis : {planner.get_analysis()}")
+    print(f"planner.plan : {planner.get_plan()}")
+    print(f"planner.action : {planner.get_action()}")
