@@ -1,64 +1,62 @@
-from utils.commoner import Commoner
-from utils.model_utils.chatbot import ChatBot
+from utils.frame_utils._commoner import _Commoner
 
 
-class Criticor(Commoner):
-    prompt = """你是一个逻辑批评家。你需要根据用户问题和历史执行信息，对问题规划和当前执行信息进行批评。请注意：整个问题规划是一步一步执行的，所以批评理由不要是还没执行某个步骤；如果当前信息没有问题，也请给出理由。
-
-
-
-
-用户问题：
+class Executor(_Commoner):
+    system_prompt = """你是一个有用的助手。请你根据用户问题、问题规划和历史执行信息，执行所要求的步骤。请一步一步执行，不要多执行。"""
+    user_prompt = """## 用户问题：
+```text
 {question}
+```
 
 
 
 
-问题分析：
+## 问题分析：
+```text
 {analysis}
+```
 
 
 
 
-问题规划：
+## 问题规划：
+```text
 {plan}
+```
 
 
 
 
-历史执行信息：
+## 历史执行信息：
+```text
 {history}
+```
 
 
 
 
-当前执行信息：
+## 请执行:
+```text
 {action}
-{action_output}
+```
+"""
 
+    def __init__(self):
+        super().__init__()
+        self.action_output = ""
 
-
-
-批评时请注意以上信息是否符合用户问题，特别是用户问题中的隐含条件，或是模型的逻辑问题，还有数学计算也可能算错。
-请输出批评理由:"""
-
-    def __init__(self, question):
-        super().__init__(question)
-        self.criticism = ""
-
-    def predict(self, plan, action, action_output, analysis="", history=""):
-        self.criticism = ""
-        for token in self._predict(analysis=analysis, plan=plan, history=history, action=action,
-                                   action_output=action_output):
-            self.criticism += token
+    def predict(self, question, plan, action, analysis="", history=""):
+        self.action_output = ""
+        for token in self._predict(question=question, analysis=analysis, plan=plan, history=history, action=action):
+            self.action_output += token
             yield token
 
-    def get_criticism(self):
-        return self.criticism
+    def get_action_output(self):
+        return self.action_output
 
 
 if __name__ == "__main__":
-    question = """S先生、P先生、Q先生他们知道桌子的抽屉里有16张扑克牌：红桃A、Q、4 黑桃J、8、4、2、7、3 草花K、Q、5、4、6 方块A、5。约翰教授从这16张牌中挑出一张牌来，并把这张牌的点数告诉 P先生，把这张牌的花色告诉Q先生。这时，约翰教授问P先生和Q 先生：你们能从已知的点数或花色中推知这张牌是什么牌吗？于是，S先生听到如下的对话：
+    question = """S先生、P先生、Q先生他们知道桌子的抽屉里有16张扑克牌：红桃A、Q、4 黑桃J、8、4、2、7、3 草花K、Q、5、4、6 方块A、5。约翰教授从这16张牌中挑出一张牌来，并把这张牌的点数告诉P先生，把这张牌的花色告诉Q先生。这时，约翰教授问P先生和Q先生：你们能从已知的点数或花色中推知这张牌是什么牌吗？于是，S先生听到如下的对话：
 
 P先生说：我不知道这张牌。
 
@@ -93,17 +91,9 @@ Q先生听到了P先生的回答，说：我也知道了。
 4. **步骤4：最终确认**
    - 在限定的选择中找到只有一张符合所有信息描述条件的答案。"""
     action = """步骤1：罗列这16张扑克牌的具体点数与花色，例如红桃A、Q、4；黑桃J、8、4、2、7、3；草花K、Q、5、4、6；方块A、5"""
-    action_output = """步骤1：羅列這16張扑克牌的具體點數與花色如下：
 
-- 紅桃 (Heart) ： A, Q, 4
-- 黑桃 (Spade)： J, 8, 4, 2, 7, 3
-- 草花 (Diamonds)： K, Q, 5, 4, 6
-- 方块 (Clubs): A, 5
-
-接下来，我们将按照提供的对话，逐一分析这16张牌的信息，并最终确定那张唯一的牌。"""
-
-    criticor = Criticor(question=question)
-    for token in criticor.predict(analysis=analysis, plan=plan, action=action, action_output=action_output, history=""):
+    executor = Executor()
+    for token in executor.predict(question=question, analysis=analysis, plan=plan, action=action, history=""):
         print(token, end='', flush=True)
     print('\n\n\n')
-    print(f"criticor.criticism : {criticor.get_criticism()}")
+    print(f"executor.action_output : {executor.get_action_output()}")
