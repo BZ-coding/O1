@@ -12,7 +12,7 @@ class _Commoner(ABC):
         self._messages = []
 
     def _model_predict(self, messages):
-        return self._chatbot.chat(messages=messages, stream=True)
+        return self._chatbot.chat(messages=messages, stream=True, temperature=0.0)
 
     def _predict(self, **kwargs):
         messages = [{"role": "system", "content": self.system_prompt},

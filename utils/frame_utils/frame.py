@@ -2,7 +2,9 @@ import jsonlines
 
 from utils.frame_utils.criticor import Criticor
 from utils.frame_utils.executor import Executor
+from utils.frame_utils.over import Over
 from utils.frame_utils.planner import Planner
+from utils.frame_utils.summarizer import Summarizer
 
 
 class Frame:
@@ -13,30 +15,47 @@ class Frame:
         self.action_output = ""
         self.criticism = ""
         self.history = ""
+        self.is_over = False
 
     def predict(self, question):
         planner = Planner()
         executor = Executor()
         criticor = Criticor()
+        over = Over()
+        summarizer = Summarizer()
 
-        for token in planner.predict(question=question, history=self.history):
-            yield token
-        self.analysis = planner.get_analysis()
-        self.plan = planner.get_plan()
-        self.action = planner.get_action()
-        print("\n")
+        self.is_over = False
+        while not self.is_over:
+            for token in planner.predict(question=question, history=self.history):
+                yield token
+            self.analysis = planner.get_analysis()
+            self.plan = planner.get_plan()
+            self.action = planner.get_action()
+            print("\n")
 
-        for token in executor.predict(question=question, analysis=self.analysis, plan=self.plan, action=self.action,
-                                      history=self.history):
-            yield token
-        self.action_output = executor.get_action_output()
-        print("\n")
+            for token in executor.predict(question=question, analysis=self.analysis, plan=self.plan, action=self.action,
+                                          history=self.history):
+                yield token
+            self.action_output = executor.get_action_output()
+            print("\n")
 
-        for token in criticor.predict(question=question, analysis=self.analysis, plan=self.plan, action=self.action,
-                                      action_output=self.action_output, history=self.history):
+            for token in criticor.predict(question=question, analysis=self.analysis, plan=self.plan, action=self.action,
+                                          action_output=self.action_output, history=self.history):
+                yield token
+            self.criticism = criticor.get_criticism()
+            print("\n")
+
+            for token in over.predict(question=question, analysis=self.analysis, plan=self.plan, action=self.action,
+                                      action_output=self.action_output, history=self.history, criticism=self.criticism):
+                # yield token
+                pass
+            self.is_over = over.get_is_over()
+            print("\n")
+
+        for token in summarizer.predict(question=question, analysis=self.analysis, plan=self.plan, action=self.action,
+                                        action_output=self.action_output, history=self.history,
+                                        criticism=self.criticism):
             yield token
-        self.criticism = criticor.get_criticism()
-        print("\n")
 
         with jsonlines.open('data_planner.jsonl', mode='w') as writer:
             writer.write_all(planner.get_messages())
@@ -44,6 +63,8 @@ class Frame:
             writer.write_all(executor.get_messages())
         with jsonlines.open('data_criticor.jsonl', mode='w') as writer:
             writer.write_all(criticor.get_messages())
+        with jsonlines.open('data_over.jsonl', mode='w') as writer:
+            writer.write_all(over.get_messages())
 
 
 if __name__ == "__main__":
