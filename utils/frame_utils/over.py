@@ -35,7 +35,7 @@ class Over(_Commoner):
 
 
 
-当前执行信息：
+## 当前执行信息：
 ```text
 {action}
 {action_output}
@@ -44,7 +44,7 @@ class Over(_Commoner):
 
 
 
-批评理由:
+## 批评理由:
 ```text
 {criticism}
 ```
@@ -67,7 +67,7 @@ class Over(_Commoner):
             yield token
 
     def get_is_over(self):
-        return self.over_result.startswith("继续") or self.over_result.endswith("继续")
+        return not (self.over_result.startswith("继续") or self.over_result.endswith("继续"))
 
 
 if __name__ == "__main__":

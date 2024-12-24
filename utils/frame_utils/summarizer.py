@@ -35,7 +35,7 @@ class Summarizer(_Commoner):
 
 
 
-当前执行信息：
+## 当前执行信息：
 ```text
 {action}
 {action_output}
@@ -44,7 +44,7 @@ class Summarizer(_Commoner):
 
 
 
-批评理由:
+## 批评理由:
 ```text
 {criticism}
 ```

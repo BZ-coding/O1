@@ -17,6 +17,16 @@ class Frame:
         self.history = ""
         self.is_over = False
 
+    def _update_history(self, action, action_output, criticism):
+        self.history = f"""{self.history}
+
+执行信息：
+{action}
+执行结果：
+{action_output}
+批评信息：
+{criticism}"""
+
     def predict(self, question):
         planner = Planner()
         executor = Executor()
@@ -47,10 +57,12 @@ class Frame:
 
             for token in over.predict(question=question, analysis=self.analysis, plan=self.plan, action=self.action,
                                       action_output=self.action_output, history=self.history, criticism=self.criticism):
-                # yield token
-                pass
+                yield token
+                # pass
             self.is_over = over.get_is_over()
             print("\n")
+
+            self._update_history(action=self.action, action_output=self.action_output, criticism=self.criticism)
 
         for token in summarizer.predict(question=question, analysis=self.analysis, plan=self.plan, action=self.action,
                                         action_output=self.action_output, history=self.history,
