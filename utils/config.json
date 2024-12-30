@@ -1,0 +1,10 @@
+{
+  "architectures": [
+    "FrameAgentForCausalLM"
+  ],
+  "auto_map": {
+    "AutoConfig": "configuration_frame_agent.FrameAgentConfig",
+    "AutoModel": "modeling_deepseek.FrameAgentForCausalLM",
+    "AutoModelForCausalLM": "modeling_deepseek.FrameAgentForCausalLM"
+  }
+}
