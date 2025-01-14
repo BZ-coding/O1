@@ -17,6 +17,12 @@ class Frame:
         self.history = ""
         self.is_over = False
 
+        self.planner = None
+        self.executor = None
+        self.criticor = None
+        self.over = None
+        self.summarizer = None
+
     def _update_history(self, action, action_output, criticism):
         self.history = f"""{self.history}
 
@@ -28,55 +34,130 @@ class Frame:
 {criticism}"""
 
     def predict(self, question):
-        planner = Planner()
-        executor = Executor()
-        criticor = Criticor()
-        over = Over()
-        summarizer = Summarizer()
+        self.planner = Planner()
+        self.executor = Executor()
+        self.criticor = Criticor()
+        self.over = Over()
+        self.summarizer = Summarizer()
 
         self.is_over = False
         while not self.is_over:
-            for token in planner.predict(question=question, history=self.history):
-                yield token
-            self.analysis = planner.get_analysis()
-            self.plan = planner.get_plan()
-            self.action = planner.get_action()
+            yield from self._handle_planner(question)
             print("\n")
 
-            for token in executor.predict(question=question, analysis=self.analysis, plan=self.plan, action=self.action,
-                                          history=self.history):
-                yield token
-            self.action_output = executor.get_action_output()
+            yield from self._handle_executor(question)
             print("\n")
 
-            for token in criticor.predict(question=question, analysis=self.analysis, plan=self.plan, action=self.action,
-                                          action_output=self.action_output, history=self.history):
-                yield token
-            self.criticism = criticor.get_criticism()
+            yield from self._handle_criticor(question)
             print("\n")
 
-            for token in over.predict(question=question, analysis=self.analysis, plan=self.plan, action=self.action,
-                                      action_output=self.action_output, history=self.history, criticism=self.criticism):
-                yield token
-                # pass
-            self.is_over = over.get_is_over()
+            yield from self._handle_over(question)
             print("\n")
 
             self._update_history(action=self.action, action_output=self.action_output, criticism=self.criticism)
 
-        for token in summarizer.predict(question=question, analysis=self.analysis, plan=self.plan, action=self.action,
-                                        action_output=self.action_output, history=self.history,
-                                        criticism=self.criticism):
-            yield token
+        yield from self._handle_summarizer(question)
 
         with jsonlines.open('data_planner.jsonl', mode='w') as writer:
-            writer.write_all(planner.get_messages())
+            writer.write_all(self.planner.get_messages())
         with jsonlines.open('data_executor.jsonl', mode='w') as writer:
-            writer.write_all(executor.get_messages())
+            writer.write_all(self.executor.get_messages())
         with jsonlines.open('data_criticor.jsonl', mode='w') as writer:
-            writer.write_all(criticor.get_messages())
+            writer.write_all(self.criticor.get_messages())
         with jsonlines.open('data_over.jsonl', mode='w') as writer:
-            writer.write_all(over.get_messages())
+            writer.write_all(self.over.get_messages())
+
+        self.planner = None
+        self.executor = None
+        self.criticor = None
+        self.over = None
+        self.summarizer = None
+
+    def step_predict(self, question):
+        self.planner = Planner()
+        self.executor = Executor()
+        self.criticor = Criticor()
+        self.over = Over()
+        self.summarizer = Summarizer()
+
+        self.is_over = False
+        while not self.is_over:
+            result = ""
+            for token in self._handle_planner(question):
+                result += token
+            yield result
+            print("\n")
+
+            result = ""
+            for token in self._handle_executor(question):
+                result += token
+            yield result
+            print("\n")
+
+            result = ""
+            for token in self._handle_criticor(question):
+                result += token
+            yield result
+            print("\n")
+
+            result = ""
+            for token in self._handle_over(question):
+                result += token
+            yield result
+            print("\n")
+
+            self._update_history(action=self.action, action_output=self.action_output, criticism=self.criticism)
+
+        yield from self._handle_summarizer(question)
+
+        with jsonlines.open('data_planner.jsonl', mode='w') as writer:
+            writer.write_all(self.planner.get_messages())
+        with jsonlines.open('data_executor.jsonl', mode='w') as writer:
+            writer.write_all(self.executor.get_messages())
+        with jsonlines.open('data_criticor.jsonl', mode='w') as writer:
+            writer.write_all(self.criticor.get_messages())
+        with jsonlines.open('data_over.jsonl', mode='w') as writer:
+            writer.write_all(self.over.get_messages())
+
+        self.planner = None
+        self.executor = None
+        self.criticor = None
+        self.over = None
+        self.summarizer = None
+
+    def _handle_summarizer(self, question):
+        for token in self.summarizer.predict(question=question, analysis=self.analysis, plan=self.plan,
+                                             action=self.action, action_output=self.action_output, history=self.history,
+                                             criticism=self.criticism):
+            yield token
+
+    def _handle_over(self, question):
+        for token in self.over.predict(question=question, analysis=self.analysis, plan=self.plan,
+                                       action=self.action,
+                                       action_output=self.action_output, history=self.history,
+                                       criticism=self.criticism):
+            yield token
+        self.is_over = self.over.get_is_over()
+
+    def _handle_criticor(self, question):
+        for token in self.criticor.predict(question=question, analysis=self.analysis, plan=self.plan,
+                                           action=self.action, action_output=self.action_output,
+                                           history=self.history):
+            yield token
+        self.criticism = self.criticor.get_criticism()
+
+    def _handle_executor(self, question):
+        for token in self.executor.predict(question=question, analysis=self.analysis, plan=self.plan,
+                                           action=self.action, history=self.history):
+            yield token
+        self.action_output = self.executor.get_action_output()
+
+    def _handle_planner(self, question):
+        for token in self.planner.predict(question=question, history=self.history):
+            yield token
+        self.analysis = self.planner.get_analysis()
+        self.plan = self.planner.get_plan()
+        self.action = self.planner.get_action()
 
 
 if __name__ == "__main__":
@@ -94,3 +175,5 @@ Q先生听到了P先生的回答，说：我也知道了。
     frame = Frame()
     for token in frame.predict(question=question):
         print(token, end='', flush=True)
+    # for token in frame.step_predict(question=question):
+    #     print(token, end='', flush=True)
